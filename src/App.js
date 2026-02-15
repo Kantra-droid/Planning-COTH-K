@@ -70,6 +70,7 @@ const App = () => {
     openEditAgent,
     openHabilitations,
     openPrevisionnelJour,
+    openChatAssistant,
     closeModal,
     setSelectedAgent
   } = useModals();
@@ -280,6 +281,7 @@ const App = () => {
         user={user}
         connectionStatus={connectionStatus}
         onOpenGestionAgents={openGestionAgents}
+        onOpenChatAssistant={openChatAssistant}
         onSignOut={signOut}
         onBackToLanding={handleBackToLanding}
         showBackButton={true}

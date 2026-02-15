@@ -43,7 +43,7 @@ const Header = ({
         {/* Logo et titre */}
         <div className="flex items-center space-x-2">
           <Calendar className="w-6 h-6 text-blue-600" />
-          <h1 className="text-xl font-bold text-gray-900">Planning COGC Paris Nord</h1>
+          <h1 className="text-xl font-bold text-gray-900">Planning COT H/K</h1>
         </div>
         
         {/* Statut de connexion */}

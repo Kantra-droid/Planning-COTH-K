@@ -24,7 +24,21 @@ export const JOURS_FERIES_2026 = {
 };
 
 export const JOURS_FERIES = JOURS_FERIES_2026;
-export const JOURS_FERIES_2025 = JOURS_FERIES_2026;
+
+export const JOURS_FERIES_2025 = {
+  JANVIER: [1],
+  FEVRIER: [],
+  MARS: [],
+  AVRIL: [21],       // Lundi de Paques
+  MAI: [1, 8, 29],   // Fete du Travail, Victoire, Ascension
+  JUIN: [9],          // Lundi de Pentecote
+  JUILLET: [14],
+  AOÛT: [15],
+  SEPTEMBRE: [],
+  OCTOBRE: [],
+  NOVEMBRE: [1, 11],
+  DECEMBRE: [25]
+};
 
 export const CODE_COLORS = {
   '-': 'bg-blue-100 text-blue-800',
@@ -194,3 +208,103 @@ export const POSTES_CODES_WITH_LIBRE = [
 ];
 
 export const LIBRE_MARKER = 'LIBRE';
+
+
+// === Exports hérités du projet source (COGC) ===
+
+export const SERVICE_JOUR_CODES = [
+  { code: 'VL', desc: 'VL' },
+  { code: 'D', desc: 'Disponible' },
+  { code: 'EIA', desc: 'EIA' },
+  { code: 'DPX', desc: 'DPX' },
+  { code: 'PSE', desc: 'PSE' },
+  { code: 'INAC', desc: 'Inactif' },
+  { code: 'VM', desc: 'VM' }
+];
+
+export const HABILITATION_CODES = [
+  { code: 'HAB', desc: 'Habilitation' },
+  { code: 'FO RO', desc: 'FO RO' },
+  { code: 'FO RC', desc: 'FO RC' },
+  { code: 'FO CAC', desc: 'FO CAC' },
+  { code: 'FO CRC', desc: 'FO CRC' },
+  { code: 'FO ACR', desc: 'FO ACR' },
+  { code: 'FO CCU', desc: 'FO CCU' }
+];
+
+export const JOURS_RH_CODES = [
+  { code: 'VT', desc: 'Temps partiel' },
+  { code: 'D2I', desc: 'D2I' },
+  { code: 'RU', desc: 'RU' },
+  { code: 'RA', desc: 'RA' },
+  { code: 'RN', desc: 'RN' },
+  { code: 'RQ', desc: 'RQ' },
+  { code: 'TY', desc: 'TY' },
+  { code: 'AY', desc: 'AY' },
+  { code: 'AH', desc: 'AH' },
+  { code: 'DD', desc: 'DD' }
+];
+
+export const PCD_CODES = [
+  { code: 'CCCBO', desc: 'CCCBO' },
+  { code: 'CBVD', desc: 'CBVD' }
+];
+
+export const ABSENCES_CODES = [
+  { code: 'MA', desc: 'Maladie' },
+  { code: 'F', desc: 'Férié' }
+];
+
+export const STATUT_CONGE_CODES = [
+  { code: '', desc: 'Aucun' },
+  { code: 'C', desc: 'Congé accordé' },
+  { code: 'C?', desc: 'Congé en attente' },
+  { code: 'CNA', desc: 'Congé refusé' }
+];
+
+export const POSTES_PAR_GROUPE = {
+  // Agents RC - ROULEMENT REGULATEUR CENTRE → choix RC ou SOUFF
+  'RC - ROULEMENT REGULATEUR CENTRE': ['RC', 'SOUF'],
+  // Agents EAC - APPORT DENFERT → choix CCU ou RE
+  'EAC - APPORT DENFERT': ['CCU', 'RE']
+};
+
+export const GROUPES_AVEC_POSTE = [
+  'RESERVE REGULATEUR PN',
+  'RESERVE REGULATEUR DR',
+  'RESERVE PCD - DENFERT',
+  'RC - ROULEMENT REGULATEUR CENTRE',
+  'EAC - APPORT DENFERT'
+];
+
+export const POSTES_SUPPLEMENTAIRES = [
+  { code: '+ACR', desc: 'Poste ACR supplémentaire' },
+  { code: '+ACRF', desc: 'ACR Figé - temps réguls' },
+  { code: '+RO', desc: 'Poste RO supplémentaire' },
+  { code: '+RE', desc: 'Poste RE supplémentaire' },
+  { code: '+RC', desc: 'Poste RC supplémentaire' },
+  { code: '+CCU', desc: 'Poste CCU supplémentaire' },
+  { code: '+CAC', desc: 'Poste CAC supplémentaire' },
+  { code: '+SOUF', desc: 'Poste SOUF supplémentaire' },
+  { code: '+OV', desc: 'Poste OV supplémentaire' },
+  { code: '+PN', desc: 'Rapatriement Paris Nord' }
+];
+
+export const GROUPES_PAR_STATUT = {
+  roulement: [
+    'CRC - ROULEMENT CRC COGC',
+    'ACR - ROULEMENT ACR COGC',
+    'RC - ROULEMENT REGULATEUR CENTRE',
+    'RO - ROULEMENT REGULATEUR TABLE OUEST',
+    'CCU - ROULEMENT CCU DENFERT',
+    'RE - ROULEMENT REGULATEUR TABLE EST DENFERT',
+    'CAC - ROULEMENT DENFERT'
+  ],
+  reserve: [
+    'RESERVE REGULATEUR PN',
+    'RESERVE REGULATEUR DR',
+    'EAC - APPORT DENFERT',
+    'RESERVE PCD - DENFERT'
+  ]
+};
+

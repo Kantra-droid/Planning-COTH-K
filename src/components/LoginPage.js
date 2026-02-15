@@ -262,8 +262,8 @@ const LoginPage = ({ onLogin }) => {
               <TrainIcon className="w-10 h-10 text-white" />
               <CalendarIcon className="w-8 h-8 text-blue-200" />
             </div>
-            <h1 className="text-2xl font-bold text-white">Planning COGC</h1>
-            <p className="text-blue-200 text-sm mt-1">Paris Nord • Denfert-Rochereau</p>
+            <h1 className="text-2xl font-bold text-white">Planning COT H/K</h1>
+            <p className="text-blue-200 text-sm mt-1">Groupes d'intervention</p>
             {/* SNCF badge */}
             <div className="mt-4 inline-flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full">
               <div className="w-2 h-2 bg-red-500 rounded-full" />
@@ -554,7 +554,7 @@ const LoginPage = ({ onLogin }) => {
         
         {/* Footer */}
         <p className="text-center text-xs text-gray-400 mt-6">
-          © 2025 COGC Planning • Paris Nord
+          © 2026 Planning COT H/K
         </p>
       </div>
     </div>

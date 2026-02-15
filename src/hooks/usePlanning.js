@@ -67,18 +67,18 @@ export function usePlanning(user, currentMonth, currentYear = CURRENT_YEAR) {
       const planningFromDB = await supabaseService.getPlanningForMonth(startDate, endDate);
       
       // Organiser les données de planning
-      // COT H/K: on utilise agent.nom comme clé (pas nom+prenom)
+      // Clé = "nom prenom" pour correspondre à PlanningTable
       const planningData = {};
       agentsResult.forEach(agent => {
-        const agentKey = agent.nom;
+        const agentKey = `${agent.nom} ${agent.prenom}`;
         planningData[agentKey] = {};
       });
-      
+
       if (planningFromDB && planningFromDB.length > 0) {
         planningFromDB.forEach(entry => {
           const agent = agentsResult.find(a => a.id === entry.agent_id);
           if (agent) {
-            const agentKey = agent.nom;
+            const agentKey = `${agent.nom} ${agent.prenom}`;
             const day = parseDayFromDateString(entry.date);
             planningData[agentKey][day] = entry.code_service;
           }
@@ -115,7 +115,7 @@ export function usePlanning(user, currentMonth, currentYear = CURRENT_YEAR) {
    */
   const updateCell = useCallback(async (agentName, day, value) => {
     try {
-      const agent = agents.find(a => a.nom === agentName);
+      const agent = agents.find(a => `${a.nom} ${a.prenom}` === agentName);
       if (!agent) {
         console.error('Agent non trouvé:', agentName);
         return;
