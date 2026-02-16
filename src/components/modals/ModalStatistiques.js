@@ -123,6 +123,7 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
         matin: 0, soiree: 0, nuit: 0,
         rp: 0, ma: 0,
         total: 0,
+        weekends: 0,
         parisNord: 0, denfert: 0
       };
       const supplements = {};
@@ -137,7 +138,8 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
         byMonth[i] = {
           matin: 0, soiree: 0, nuit: 0,
           rp: 0, ma: 0,
-          total: 0
+          total: 0,
+          weekends: 0
         };
         conges['C'].byMonth[i] = 0;
         conges['CNA'].byMonth[i] = 0;
@@ -156,10 +158,19 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
 
       // Analyser les données
       (data || []).forEach(entry => {
-        const month = new Date(entry.date).getMonth();
+        const entryDate = new Date(entry.date);
+        const month = entryDate.getMonth();
+        const dayOfWeek = entryDate.getDay(); // 0=dimanche, 6=samedi
+        const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
         const code = (entry.code_service || '').toUpperCase().trim();
         const statutConge = (entry.statut_conge || '').toUpperCase().trim();
         const poste = (entry.poste_code || '').toUpperCase().trim();
+
+        // Extraire le type de vacation du code (simple ou combiné)
+        // Ex: "-" → "-", "MA O" → "O", "FO RC -" → "-", "RP" → "RP"
+        const parts = code.split(' ');
+        const lastPart = parts[parts.length - 1];
+        const horaire = ['-', 'O', 'X', 'I'].includes(lastPart) ? lastPart : code;
 
         // Compter les statuts congé DÉFINITIFS uniquement (C et CNA)
         if (statutConge === 'C' || statutConge === 'CNA') {
@@ -174,20 +185,26 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
           annual.denfert++;
         }
 
-        // === COMPTAGE DES VACATIONS ===
-        if (code === '-') {
+        // Compter les week-ends travaillés
+        if (isWeekend && code && !['RP', 'RU', 'NU', 'VT', 'I', 'C', 'CP'].includes(code)) {
+          byMonth[month].weekends++;
+          annual.weekends++;
+        }
+
+        // === COMPTAGE DES VACATIONS (simples ET combinées) ===
+        if (horaire === '-') {
           byMonth[month].matin++;
           annual.matin++;
           byMonth[month].total++;
           annual.total++;
         }
-        else if (code === 'O') {
+        else if (horaire === 'O') {
           byMonth[month].soiree++;
           annual.soiree++;
           byMonth[month].total++;
           annual.total++;
         }
-        else if (code === 'X') {
+        else if (horaire === 'X') {
           byMonth[month].nuit++;
           annual.nuit++;
           byMonth[month].total++;
@@ -203,7 +220,7 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
             conges['C'].byMonth[month]++;
           }
         }
-        else if (code === 'MA' || code === 'MALADIE') {
+        else if (code === 'MA' || code === 'MALADIE' || code.startsWith('MA ')) {
           byMonth[month].ma++;
           annual.ma++;
         }
@@ -596,6 +613,15 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
                   <div style={styles.statLabel}>Maladie</div>
                   <div style={styles.statMarker}>( MA )</div>
                 </div>
+
+                {/* Week-ends */}
+                <div style={styles.statCard}>
+                  <div style={{...styles.statIcon, backgroundColor: '#9C27B0'}}>
+                    {stats.annual.weekends}
+                  </div>
+                  <div style={styles.statLabel}>Week-ends</div>
+                  <div style={styles.statMarker}>( S/D )</div>
+                </div>
               </div>
               
               <div style={styles.totalBox}>
@@ -987,6 +1013,7 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
                         <th style={{...styles.th, color: '#facc15'}}>C</th>
                         <th style={{...styles.th, color: '#fca5a5'}}>CNA</th>
                         <th style={{...styles.th, color: '#f44336'}}>MA</th>
+                        <th style={{...styles.th, color: '#9C27B0'}}>WE</th>
                         <th style={styles.th}>Total</th>
                       </tr>
                     </thead>
@@ -1011,6 +1038,9 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
                             {stats.conges?.['CNA']?.byMonth[idx] || 0}
                           </td>
                           <td style={styles.td}>{stats.byMonth[idx]?.ma || 0}</td>
+                          <td style={{...styles.td, color: '#9C27B0', fontWeight: stats.byMonth[idx]?.weekends > 0 ? 'bold' : 'normal'}}>
+                            {stats.byMonth[idx]?.weekends || 0}
+                          </td>
                           <td style={{...styles.td, fontWeight: 'bold'}}>
                             {stats.byMonth[idx]?.total || 0}
                           </td>
@@ -1026,6 +1056,7 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
                         <td style={{...styles.td, color: '#facc15', fontWeight: 'bold'}}>{stats.conges?.['C']?.count || 0}</td>
                         <td style={{...styles.td, color: '#fca5a5', fontWeight: 'bold'}}>{stats.conges?.['CNA']?.count || 0}</td>
                         <td style={{...styles.td, fontWeight: 'bold'}}>{stats.annual.ma}</td>
+                        <td style={{...styles.td, color: '#9C27B0', fontWeight: 'bold'}}>{stats.annual.weekends}</td>
                         <td style={{...styles.td, fontWeight: 'bold'}}>{stats.annual.total}</td>
                       </tr>
                     </tbody>
