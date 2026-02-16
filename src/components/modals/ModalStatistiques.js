@@ -158,9 +158,11 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
 
       // Analyser les données
       (data || []).forEach(entry => {
-        const entryDate = new Date(entry.date);
-        const month = entryDate.getMonth();
-        const dayOfWeek = entryDate.getDay(); // 0=dimanche, 6=samedi
+        // Parser la date en UTC pour eviter les decalages de fuseau horaire
+        const dateParts = entry.date.split('-');
+        const entryDate = new Date(Date.UTC(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2])));
+        const month = entryDate.getUTCMonth();
+        const dayOfWeek = entryDate.getUTCDay(); // 0=dimanche, 6=samedi
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
         const code = (entry.code_service || '').toUpperCase().trim();
         const statutConge = (entry.statut_conge || '').toUpperCase().trim();
