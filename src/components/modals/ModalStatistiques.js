@@ -185,8 +185,8 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
           annual.denfert++;
         }
 
-        // Compter les week-ends travaillés
-        if (isWeekend && code && !['RP', 'RU', 'NU', 'VT', 'I', 'C', 'CP'].includes(code)) {
+        // Compter les week-ends travaillés (uniquement si vacation -, O ou X)
+        if (isWeekend && ['-', 'O', 'X'].includes(horaire)) {
           byMonth[month].weekends++;
           annual.weekends++;
         }
