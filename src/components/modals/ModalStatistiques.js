@@ -24,6 +24,8 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
     supplements: {},
     conges: {}
   });
+  // Objectifs annuels (totaux prévus sur toute l'année)
+  const [plannedStats, setPlannedStats] = useState(null);
   
   // États pour les sections repliables (fermées par défaut)
   const [showDetailMois, setShowDetailMois] = useState(false);
@@ -106,151 +108,167 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
     setLoading(true);
     try {
       const startDate = `${selectedYear}-01-01`;
-      // Pour l'année en cours, ne compter que jusqu'à aujourd'hui (pas le planning futur)
+      const fullEndDate = `${selectedYear}-12-31`;
       const today = new Date();
       const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-      const endDate = selectedYear === today.getFullYear() ? todayStr : `${selectedYear}-12-31`;
+      const isCurrentYear = selectedYear === today.getFullYear();
 
+      // Charger TOUTE l'année pour calculer les objectifs
       const { data, error } = await supabase
         .from('planning')
         .select('*')
         .eq('agent_id', agentInfo.id)
         .gte('date', startDate)
-        .lte('date', endDate);
+        .lte('date', fullEndDate);
 
       if (error) throw error;
 
-      // Initialiser les compteurs
-      const byMonth = {};
-      const annual = {
-        matin: 0, soiree: 0, nuit: 0,
-        rp: 0, ma: 0,
-        total: 0,
-        weekends: 0,
-        parisNord: 0, denfert: 0
+      // Fonction utilitaire pour créer un jeu de compteurs vide
+      const createCounters = () => {
+        const byMonth = {};
+        const annual = {
+          matin: 0, soiree: 0, nuit: 0,
+          rp: 0, ma: 0,
+          total: 0,
+          weekends: 0,
+          parisNord: 0, denfert: 0
+        };
+        for (let i = 0; i < 12; i++) {
+          byMonth[i] = {
+            matin: 0, soiree: 0, nuit: 0,
+            rp: 0, ma: 0,
+            total: 0,
+            weekends: 0
+          };
+        }
+        return { byMonth, annual };
       };
+
+      // Compteurs "fait" (jusqu'à aujourd'hui) et "prévu" (année entière)
+      const done = createCounters();
+      const planned = createCounters();
+
       const supplements = {};
-      
       const conges = {
         'C': { count: 0, byMonth: {} },
         'CNA': { count: 0, byMonth: {} }
       };
-
-      // Initialiser chaque mois
       for (let i = 0; i < 12; i++) {
-        byMonth[i] = {
-          matin: 0, soiree: 0, nuit: 0,
-          rp: 0, ma: 0,
-          total: 0,
-          weekends: 0
-        };
         conges['C'].byMonth[i] = 0;
         conges['CNA'].byMonth[i] = 0;
       }
 
       // Initialiser tous les types de postes supplémentaires
       supplementTypes.forEach(sup => {
-        supplements[sup] = { 
-          count: 0, 
-          byMonth: {} 
+        supplements[sup] = {
+          count: 0,
+          byMonth: {}
         };
         for (let i = 0; i < 12; i++) {
           supplements[sup].byMonth[i] = 0;
         }
       });
 
+      // Fonction pour compter une entrée dans un jeu de compteurs
+      const countEntry = (counters, month, horaire, code, poste, isWeekend) => {
+        if (isWeekend && ['-', 'O', 'X'].includes(horaire)) {
+          counters.byMonth[month].weekends++;
+          counters.annual.weekends++;
+        }
+
+        if (horaire === '-') {
+          counters.byMonth[month].matin++;
+          counters.annual.matin++;
+          counters.byMonth[month].total++;
+          counters.annual.total++;
+        }
+        else if (horaire === 'O') {
+          counters.byMonth[month].soiree++;
+          counters.annual.soiree++;
+          counters.byMonth[month].total++;
+          counters.annual.total++;
+        }
+        else if (horaire === 'X') {
+          counters.byMonth[month].nuit++;
+          counters.annual.nuit++;
+          counters.byMonth[month].total++;
+          counters.annual.total++;
+        }
+        else if (code === 'RP' || code === 'RU') {
+          counters.byMonth[month].rp++;
+          counters.annual.rp++;
+        }
+        else if (code === 'MA' || code === 'MALADIE' || code.startsWith('MA ')) {
+          counters.byMonth[month].ma++;
+          counters.annual.ma++;
+        }
+        else if (code && !['RP', 'RU', 'C', 'CP', 'MA', 'MALADIE', 'NU', 'VT', 'I'].includes(code)) {
+          counters.byMonth[month].total++;
+          counters.annual.total++;
+        }
+
+        if (POSTES_PARIS_NORD.includes(poste)) {
+          counters.annual.parisNord++;
+        } else if (POSTES_DENFERT.includes(poste)) {
+          counters.annual.denfert++;
+        }
+      };
+
       // Analyser les données
       (data || []).forEach(entry => {
-        // Parser la date en UTC pour eviter les decalages de fuseau horaire
         const dateParts = entry.date.split('-');
         const entryDate = new Date(Date.UTC(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2])));
         const month = entryDate.getUTCMonth();
-        const dayOfWeek = entryDate.getUTCDay(); // 0=dimanche, 6=samedi
+        const dayOfWeek = entryDate.getUTCDay();
         const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
         const code = (entry.code_service || '').toUpperCase().trim();
         const statutConge = (entry.statut_conge || '').toUpperCase().trim();
         const poste = (entry.poste_code || '').toUpperCase().trim();
 
-        // Extraire le type de vacation du code (simple ou combiné)
-        // Ex: "-" → "-", "MA O" → "O", "FO RC -" → "-", "RP" → "RP"
         const parts = code.split(' ');
         const lastPart = parts[parts.length - 1];
         const horaire = ['-', 'O', 'X', 'I'].includes(lastPart) ? lastPart : code;
 
-        // Compter les statuts congé DÉFINITIFS uniquement (C et CNA)
-        if (statutConge === 'C' || statutConge === 'CNA') {
-          conges[statutConge].count++;
-          conges[statutConge].byMonth[month]++;
-        }
+        const isPast = !isCurrentYear || entry.date <= todayStr;
 
-        // Compter les utilisations par site
-        if (POSTES_PARIS_NORD.includes(poste)) {
-          annual.parisNord++;
-        } else if (POSTES_DENFERT.includes(poste)) {
-          annual.denfert++;
-        }
+        // Toujours compter dans "prévu" (année entière)
+        countEntry(planned, month, horaire, code, poste, isWeekend);
 
-        // Compter les week-ends travaillés (uniquement si vacation -, O ou X)
-        if (isWeekend && ['-', 'O', 'X'].includes(horaire)) {
-          byMonth[month].weekends++;
-          annual.weekends++;
-        }
+        // Compter dans "fait" uniquement si passé
+        if (isPast) {
+          countEntry(done, month, horaire, code, poste, isWeekend);
 
-        // === COMPTAGE DES VACATIONS (simples ET combinées) ===
-        if (horaire === '-') {
-          byMonth[month].matin++;
-          annual.matin++;
-          byMonth[month].total++;
-          annual.total++;
-        }
-        else if (horaire === 'O') {
-          byMonth[month].soiree++;
-          annual.soiree++;
-          byMonth[month].total++;
-          annual.total++;
-        }
-        else if (horaire === 'X') {
-          byMonth[month].nuit++;
-          annual.nuit++;
-          byMonth[month].total++;
-          annual.total++;
-        }
-        else if (code === 'RP' || code === 'RU') {
-          byMonth[month].rp++;
-          annual.rp++;
-        }
-        else if (code === 'C' || code === 'CP') {
-          if (!statutConge) {
-            conges['C'].count++;
-            conges['C'].byMonth[month]++;
+          // Congés et suppléments uniquement pour le passé
+          if (statutConge === 'C' || statutConge === 'CNA') {
+            conges[statutConge].count++;
+            conges[statutConge].byMonth[month]++;
           }
-        }
-        else if (code === 'MA' || code === 'MALADIE' || code.startsWith('MA ')) {
-          byMonth[month].ma++;
-          annual.ma++;
-        }
-        else if (code && !['RP', 'RU', 'C', 'CP', 'MA', 'MALADIE', 'NU', 'VT', 'I'].includes(code)) {
-          byMonth[month].total++;
-          annual.total++;
-        }
-
-        // Compter les positions supplémentaires
-        if (entry.postes_supplementaires && Array.isArray(entry.postes_supplementaires)) {
-          entry.postes_supplementaires.forEach(sup => {
-            const supCode = sup.toUpperCase();
-            if (!supplements[supCode]) {
-              supplements[supCode] = { count: 0, byMonth: {} };
-              for (let i = 0; i < 12; i++) {
-                supplements[supCode].byMonth[i] = 0;
-              }
+          if (code === 'C' || code === 'CP') {
+            if (!statutConge) {
+              conges['C'].count++;
+              conges['C'].byMonth[month]++;
             }
-            supplements[supCode].count++;
-            supplements[supCode].byMonth[month]++;
-          });
+          }
+
+          if (entry.postes_supplementaires && Array.isArray(entry.postes_supplementaires)) {
+            entry.postes_supplementaires.forEach(sup => {
+              const supCode = sup.toUpperCase();
+              if (!supplements[supCode]) {
+                supplements[supCode] = { count: 0, byMonth: {} };
+                for (let i = 0; i < 12; i++) {
+                  supplements[supCode].byMonth[i] = 0;
+                }
+              }
+              supplements[supCode].count++;
+              supplements[supCode].byMonth[month]++;
+            });
+          }
         }
       });
 
-      setStats({ byMonth, annual, supplements, conges });
+      setStats({ byMonth: done.byMonth, annual: done.annual, supplements, conges });
+      // Stocker les objectifs annuels (année entière) uniquement pour l'année en cours
+      setPlannedStats(isCurrentYear ? planned.annual : null);
     } catch (err) {
       console.error('Erreur calcul stats:', err);
     } finally {
@@ -640,6 +658,60 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
                 <strong>Total :</strong> {totalVacations}
               </div>
             </div>
+
+            {/* Objectifs annuels - comparaison fait vs prévu */}
+            {plannedStats && (
+              <div style={styles.section}>
+                <h3 style={styles.sectionTitle}>🎯 Objectifs annuels {selectedYear}</h3>
+                <p style={{color: 'rgba(255,255,255,0.5)', fontSize: '11px', textAlign: 'center', marginBottom: '12px'}}>
+                  Progression par rapport au planning prévu sur l'année
+                </p>
+                <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+                  {[
+                    { label: 'Matinées', code: '-', done: stats.annual.matin, planned: plannedStats.matin, color: '#FFC107' },
+                    { label: 'Soirées', code: 'O', done: stats.annual.soiree, planned: plannedStats.soiree, color: '#FF5722' },
+                    { label: 'Nuits', code: 'X', done: stats.annual.nuit, planned: plannedStats.nuit, color: '#3F51B5' },
+                    { label: 'Repos', code: 'RP', done: stats.annual.rp, planned: plannedStats.rp, color: '#4CAF50' },
+                    { label: 'Week-ends', code: 'S/D', done: stats.annual.weekends, planned: plannedStats.weekends, color: '#9C27B0' },
+                  ].map(item => {
+                    const pct = item.planned > 0 ? Math.round((item.done / item.planned) * 100) : 0;
+                    return (
+                      <div key={item.label} style={{
+                        backgroundColor: 'rgba(255,255,255,0.05)',
+                        borderRadius: '10px',
+                        padding: '10px 14px',
+                      }}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px'}}>
+                          <span style={{color: item.color, fontWeight: 'bold', fontSize: '13px'}}>
+                            {item.label} ({item.code})
+                          </span>
+                          <span style={{color: 'white', fontSize: '13px'}}>
+                            <strong>{item.done}</strong>
+                            <span style={{color: 'rgba(255,255,255,0.4)'}}> / {item.planned}</span>
+                          </span>
+                        </div>
+                        <div style={{
+                          width: '100%', height: '8px',
+                          backgroundColor: 'rgba(255,255,255,0.1)',
+                          borderRadius: '4px', overflow: 'hidden'
+                        }}>
+                          <div style={{
+                            width: `${Math.min(pct, 100)}%`,
+                            height: '100%',
+                            backgroundColor: item.color,
+                            borderRadius: '4px',
+                            transition: 'width 0.5s ease'
+                          }} />
+                        </div>
+                        <div style={{textAlign: 'right', color: 'rgba(255,255,255,0.4)', fontSize: '10px', marginTop: '3px'}}>
+                          {pct}%
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Congés (C / CNA) */}
             <div style={styles.section}>
