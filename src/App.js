@@ -78,7 +78,7 @@ const App = () => {
   } = useModals();
 
   // Années forcées
-  const FORCED_YEARS = [2025, 2026];
+  const FORCED_YEARS = [2026];
   
   React.useEffect(() => {
     const loadAvailableYears = async () => {
