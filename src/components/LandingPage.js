@@ -83,11 +83,11 @@ const LandingPage = ({ onNavigate, user, onSignOut, canInstallPWA, isAppInstalle
       action: () => setShowDocuments(true)
     },
     {
-      id: 'durandal',
-      badge: '🚨',
-      title: 'Durandal',
-      subtitle: 'Gestion des incidents',
-      action: () => window.open('https://durandal2.sso.reseau.sncf.fr/incidents/index', '_blank')
+      id: 'sharepoint',
+      badge: '📂',
+      title: 'SharePoint',
+      subtitle: 'Espace COT HK',
+      action: () => window.open('https://sncf.sharepoint.com/sites/IVCOTHK/SitePages/home.aspx', '_blank')
     },
     {
       id: 'annuaire',
