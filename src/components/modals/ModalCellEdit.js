@@ -71,18 +71,20 @@ const PCD_POSTE_CODES = ['CCCBO', 'CBVD'];
  * 
  * @version 4.5.2 - Fix préservation note_privee lors effacement + visibilité texte modales
  */
-const ModalCellEdit = ({ 
-  selectedCell, 
-  cellData, 
-  agentsData, 
+const ModalCellEdit = ({
+  selectedCell,
+  cellData,
+  agentsData,
   allAgents = [],
   allPlanning = {},
   currentMonth,
   currentYear,
   userEmail,
-  onUpdateCell, 
+  isAdmin = false,
+  agentProfile = null,
+  onUpdateCell,
   onCroisement,
-  onClose 
+  onClose
 }) => {
   // États pour service, poste et postes supplémentaires
   const [tempService, setTempService] = useState('');      // Horaire (-, O, X, I, RP, NU)
@@ -289,6 +291,10 @@ const ModalCellEdit = ({
   }, [startDate, endDate, applyToMultipleDays]);
 
   if (!selectedCell) return null;
+
+  // Defense en profondeur: verifier l'autorisation d'edition
+  const ownName = agentProfile ? `${agentProfile.nom} ${agentProfile.prenom || ''}`.trim() : '';
+  const canEdit = isAdmin || selectedCell.agent.trim() === ownName;
 
   // === FONCTIONS HELPER ===
   
@@ -1313,22 +1319,29 @@ const ModalCellEdit = ({
 
           {/* Boutons d'action */}
           <div className="flex justify-between pt-4 border-t mt-4">
-            <button onClick={handleDelete} className="px-4 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700">
+            <button
+              onClick={handleDelete}
+              disabled={!canEdit}
+              className={`px-4 py-2 text-sm rounded ${canEdit ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+            >
               Effacer
             </button>
             <div className="flex space-x-2">
               <button onClick={onClose} className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-50">
                 Annuler
               </button>
-              <button 
+              <button
                 onClick={handleSave}
-                disabled={!tempService && !tempCategorie && !tempPoste && !tempStatutConge}
+                disabled={!canEdit || (!tempService && !tempCategorie && !tempPoste && !tempStatutConge)}
                 className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300"
               >
                 Sauvegarder
               </button>
             </div>
           </div>
+          {!canEdit && (
+            <p className="text-xs text-red-500 text-center mt-2">Vous ne pouvez modifier que votre propre planning.</p>
+          )}
         </div>
       </div>
 

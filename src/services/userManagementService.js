@@ -4,23 +4,23 @@ import { supabase } from '../lib/supabaseClient';
 export const DEFAULT_PASSWORD = '123456';
 
 /**
- * Génère l'email SNCF à partir du nom et prénom
- * Format: prenom.nom@reseau.sncf.fr
- * 
+ * Genere l'email COT HK a partir du nom
+ * Format: nom_en_minuscule@cothk.fr (espaces remplaces par des tirets)
+ *
  * @param {string} nom - Nom de l'agent
- * @param {string} prenom - Prénom de l'agent
- * @returns {string} Email généré
+ * @param {string} [prenom] - Prenom (ignore, conserve pour compat)
+ * @returns {string} Email genere
  */
-export const generateSNCFEmail = (nom, prenom) => {
-  if (!nom || !prenom) return '';
+export const generateEmail = (nom, prenom) => {
+  if (!nom) return '';
   const cleanNom = nom.toLowerCase()
     .replace(/\s+/g, '-')
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const cleanPrenom = prenom.toLowerCase()
-    .replace(/\s+/g, '-')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  return `${cleanPrenom}.${cleanNom}@reseau.sncf.fr`;
+  return `${cleanNom}@cothk.fr`;
 };
+
+// Alias pour compatibilite avec l'ancien code
+export const generateSNCFEmail = generateEmail;
 
 /**
  * Crée un compte utilisateur Supabase Auth pour un agent
@@ -38,9 +38,9 @@ export const generateSNCFEmail = (nom, prenom) => {
  * @returns {Object} - { success, email, error, exists, data }
  */
 export const createAgentAccount = async (agent) => {
-  // Utiliser l'email fourni ou le générer
-  const email = agent.email || generateSNCFEmail(agent.nom, agent.prenom);
-  
+  // Utiliser l'email fourni ou le generer
+  const email = agent.email || generateEmail(agent.nom, agent.prenom);
+
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -53,41 +53,54 @@ export const createAgentAccount = async (agent) => {
         }
       }
     });
-    
+
     if (error) {
-      // Si l'utilisateur existe déjà
-      if (error.message.includes('already registered') || 
+      // Si l'utilisateur existe deja
+      if (error.message.includes('already registered') ||
           error.message.includes('already been registered')) {
-        return { 
-          success: false, 
-          email, 
+        return {
+          success: false,
+          email,
           error: 'Compte déjà existant',
-          exists: true 
+          exists: true
         };
       }
       throw error;
     }
-    
-    // Vérifier si c'est un utilisateur existant (Supabase retourne quand même data sans erreur)
+
+    // Verifier si c'est un utilisateur existant (Supabase retourne quand meme data sans erreur)
     if (data.user && data.user.identities && data.user.identities.length === 0) {
-      return { 
-        success: false, 
-        email, 
+      return {
+        success: false,
+        email,
         error: 'Compte déjà existant',
-        exists: true 
+        exists: true
       };
     }
-    
-    console.log(`✅ Compte Auth créé pour ${agent.nom} ${agent.prenom} (${email})`);
+
+    // Mettre a jour user_id et email dans la table agents
+    if (data.user && agent.id) {
+      const { error: updateError } = await supabase
+        .from('agents')
+        .update({ user_id: data.user.id, email })
+        .eq('id', agent.id);
+
+      if (updateError) {
+        console.error(`Erreur mise a jour agents.user_id pour ${email}:`, updateError);
+      }
+    }
+
+    console.log(`Compte Auth cree pour ${agent.nom} (${email})`);
     return { success: true, email, data };
   } catch (err) {
-    console.error(`❌ Erreur création compte Auth pour ${email}:`, err);
+    console.error(`Erreur creation compte Auth pour ${email}:`, err);
     return { success: false, email, error: err.message };
   }
 };
 
 const userManagementService = {
   DEFAULT_PASSWORD,
+  generateEmail,
   generateSNCFEmail,
   createAgentAccount
 };

@@ -17,6 +17,7 @@ import { Calendar, Users, ArrowLeft, Home, MessageSquare } from 'lucide-react';
  */
 const Header = ({
   user,
+  isAdmin = false,
   connectionStatus,
   onOpenGestionAgents,
   onOpenChatAssistant,
@@ -55,15 +56,17 @@ const Header = ({
         {/* Email utilisateur - masqué sur mobile */}
         <span className="text-sm text-gray-600 mr-4 hidden lg:block">{user?.email}</span>
         
-        {/* Bouton Gestion Agents */}
-        <button
-          onClick={onOpenGestionAgents}
-          className="flex items-center space-x-1 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-          title="Gérer les agents"
-        >
-          <Users className="w-4 h-4" />
-          <span className="hidden sm:inline">Gestion Agents</span>
-        </button>
+        {/* Bouton Gestion Agents - admin uniquement */}
+        {isAdmin && (
+          <button
+            onClick={onOpenGestionAgents}
+            className="flex items-center space-x-1 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+            title="Gérer les agents"
+          >
+            <Users className="w-4 h-4" />
+            <span className="hidden sm:inline">Gestion Agents</span>
+          </button>
+        )}
 
         {/* Bouton Regul Bot */}
         <button

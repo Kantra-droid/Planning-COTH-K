@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { generateSNCFEmail, DEFAULT_PASSWORD } from '../services/userManagementService';
+import { generateEmail, DEFAULT_PASSWORD } from '../services/userManagementService';
 
 // Train Icon SVG
 const TrainIcon = ({ className }) => (
@@ -78,7 +78,7 @@ const LoginPage = ({ onLogin }) => {
       try {
         const { data, error } = await supabase
           .from('agents')
-          .select('id, nom, prenom, email')
+          .select('id, nom, prenom, email, user_id')
           .order('nom', { ascending: true });
         
         if (error) throw error;
@@ -102,7 +102,7 @@ const LoginPage = ({ onLogin }) => {
           setGeneratedEmail(agent.email);
           setEmailSource('db');
         } else {
-          setGeneratedEmail(generateSNCFEmail(agent.nom, agent.prenom));
+          setGeneratedEmail(generateEmail(agent.nom, agent.prenom));
           setEmailSource('generated');
         }
       }
@@ -116,7 +116,7 @@ const LoginPage = ({ onLogin }) => {
   const regenerateEmail = () => {
     const agent = agents.find(a => a.id === selectedAgent);
     if (agent) {
-      setGeneratedEmail(generateSNCFEmail(agent.nom, agent.prenom));
+      setGeneratedEmail(generateEmail(agent.nom, agent.prenom));
       setEmailSource('generated');
     }
   };
@@ -329,7 +329,7 @@ const LoginPage = ({ onLogin }) => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="prenom.nom@reseau.sncf.fr"
+                    placeholder="nom@cothk.fr"
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
                     required
                   />
@@ -448,7 +448,7 @@ const LoginPage = ({ onLogin }) => {
                           setEmailSource('manual');
                         }}
                         className="flex-1 px-3 py-1.5 bg-white border border-blue-300 rounded text-blue-800 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="prenom.nom@reseau.sncf.fr"
+                        placeholder="nom@cothk.fr"
                       />
                       <button
                         type="button"

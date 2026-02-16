@@ -216,15 +216,17 @@ const NavigationBar = ({
   );
 };
 
-const PlanningTable = ({ 
-  currentMonth, 
+const PlanningTable = ({
+  currentMonth,
   currentYear,
-  planning, 
-  agentsData, 
-  onCellClick, 
-  onAgentClick, 
+  planning,
+  agentsData,
+  onCellClick,
+  onAgentClick,
   onDayHeaderClick,
-  currentUser,  // NEW: pour la synchronisation des couleurs
+  currentUser,
+  isAdmin = false,
+  agentProfile = null,
 }) => {
   const year = currentYear || new Date().getFullYear();
   const userEmail = currentUser?.email || null;
@@ -377,10 +379,16 @@ const PlanningTable = ({
     const agentName = `${agent.nom} ${agent.prenom}`;
     const planningData = planning[agentName]?.[day];
     const { isWeekend, isFerier } = planningService.getJourType(day, currentMonth, year);
-    
+
+    // Determiner si cette cellule est editable
+    const ownName = agentProfile ? `${agentProfile.nom} ${agentProfile.prenom || ''}`.trim() : '';
+    const canEdit = isAdmin || agentName.trim() === ownName;
+
     let cellContent = '';
     let cellStyle = {};
-    let baseCellClass = 'border px-1 py-1 text-center text-xs cursor-pointer hover:opacity-80 transition-all min-w-[55px] min-h-[40px] relative ';
+    let baseCellClass = `border px-1 py-1 text-center text-xs transition-all min-w-[55px] min-h-[40px] relative ${
+      canEdit ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
+    } `;
     let hasNote = false;
     let isTexteLibre = false;
     
@@ -490,11 +498,11 @@ const PlanningTable = ({
     cellStyle.borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb';
     
     return (
-      <td 
+      <td
         key={`${agentName}_${day}`}
         className={baseCellClass}
         style={cellStyle}
-        onClick={() => onCellClick(agentName, day)}
+        onClick={canEdit ? () => onCellClick(agentName, day) : undefined}
       >
         {cellContent}
       </td>

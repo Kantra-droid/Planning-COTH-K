@@ -3,6 +3,7 @@ import { AlertTriangle } from 'lucide-react';
 
 // Hooks personnalisés
 import { useAuth } from './hooks/useAuth';
+import { useRole } from './hooks/useRole';
 import { usePlanning } from './hooks/usePlanning';
 import { useModals } from './hooks/useModals';
 
@@ -35,7 +36,8 @@ import './App.css';
  */
 const App = () => {
   const { user, loading: authLoading, signOut } = useAuth();
-  
+  const { isAdmin, agentProfile, roleLoading } = useRole(user);
+
   const [currentView, setCurrentView] = React.useState('landing');
   const [currentMonth, setCurrentMonth] = React.useState(MONTHS[new Date().getMonth()]);
   const [currentYear, setCurrentYear] = React.useState(new Date().getFullYear());
@@ -119,7 +121,14 @@ const App = () => {
   };
 
   // Handlers planning
-  const handleCellClick = (agentName, day) => openCellEdit(agentName, day);
+  const handleCellClick = (agentName, day) => {
+    // Non-admin ne peut editer que sa propre ligne
+    if (!isAdmin && agentProfile) {
+      const ownName = `${agentProfile.nom} ${agentProfile.prenom || ''}`.trim();
+      if (agentName.trim() !== ownName) return;
+    }
+    openCellEdit(agentName, day);
+  };
 
   const handleDayHeaderClick = (day) => {
     const monthIndex = MONTHS.indexOf(currentMonth);
@@ -216,7 +225,7 @@ const App = () => {
 
   // === RENDU ===
   
-  if (authLoading) {
+  if (authLoading || (user && roleLoading)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -279,6 +288,7 @@ const App = () => {
     <div className="min-h-screen bg-gray-50">
       <Header
         user={user}
+        isAdmin={isAdmin}
         connectionStatus={connectionStatus}
         onOpenGestionAgents={openGestionAgents}
         onOpenChatAssistant={openChatAssistant}
@@ -315,7 +325,7 @@ const App = () => {
       </div>
       
       <div className="p-4">
-        <PlanningTable 
+        <PlanningTable
           currentMonth={currentMonth}
           currentYear={currentYear}
           planning={planning}
@@ -324,12 +334,14 @@ const App = () => {
           onAgentClick={handleAgentClick}
           onDayHeaderClick={handleDayHeaderClick}
           currentUser={user}
+          isAdmin={isAdmin}
+          agentProfile={agentProfile}
         />
       </div>
       
       {/* MODALS */}
       {selectedCell && (
-        <ModalCellEdit 
+        <ModalCellEdit
           selectedCell={selectedCell}
           cellData={selectedCellData}
           agentsData={agentsData}
@@ -338,6 +350,8 @@ const App = () => {
           currentMonth={MONTHS.indexOf(currentMonth)}
           currentYear={currentYear}
           userEmail={user?.email}
+          isAdmin={isAdmin}
+          agentProfile={agentProfile}
           onUpdateCell={handleUpdateCell}
           onClose={() => closeModal('cellEdit')}
         />
@@ -346,15 +360,19 @@ const App = () => {
       <ModalGestionAgents
         isOpen={modals.gestionAgents}
         agents={agents}
+        isAdmin={isAdmin}
+        user={user}
         onClose={() => closeModal('gestionAgents')}
         onEditAgent={handleEditAgent}
         onViewHabilitations={handleAgentClick}
         onAddAgent={handleAddAgent}
+        onReloadData={() => loadData(currentMonth)}
       />
 
       <ModalEditAgent
         isOpen={modals.editAgent}
         agent={selectedAgent}
+        isAdmin={isAdmin}
         onClose={() => {
           closeModal('editAgent');
           setSelectedAgent(null);

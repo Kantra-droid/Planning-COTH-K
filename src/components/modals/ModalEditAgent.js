@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Trash2, AlertTriangle, UserPlus, Mail, Phone, RefreshCw, CheckCircle, Loader2, Hash } from 'lucide-react';
 import { GROUPES_PAR_STATUT } from '../../constants/config';
-import { generateSNCFEmail, createAgentAccount, DEFAULT_PASSWORD } from '../../services/userManagementService';
+import { generateEmail, createAgentAccount, DEFAULT_PASSWORD } from '../../services/userManagementService';
 import { supabase } from '../../lib/supabaseClient';
 
 /**
@@ -35,7 +35,7 @@ const extractGroupeCode = (groupe) => {
   return groupe.split(' - ')[0];
 };
 
-const ModalEditAgent = ({ isOpen, agent, onClose, onSave, onDelete, onCreate }) => {
+const ModalEditAgent = ({ isOpen, agent, isAdmin = false, onClose, onSave, onDelete, onCreate }) => {
   const [formData, setFormData] = useState({
     nom: '',
     prenom: '',
@@ -60,7 +60,7 @@ const ModalEditAgent = ({ isOpen, agent, onClose, onSave, onDelete, onCreate }) 
   // Générer l'email automatiquement quand nom/prénom changent (en mode création)
   useEffect(() => {
     if (isCreation && !emailManuallyEdited && formData.nom && formData.prenom) {
-      const generatedEmail = generateSNCFEmail(formData.nom, formData.prenom);
+      const generatedEmail = generateEmail(formData.nom, formData.prenom);
       setFormData(prev => ({ ...prev, email: generatedEmail }));
     }
   }, [formData.nom, formData.prenom, isCreation, emailManuallyEdited]);
@@ -103,7 +103,7 @@ const ModalEditAgent = ({ isOpen, agent, onClose, onSave, onDelete, onCreate }) 
     }
   }, [agent]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !isAdmin) return null;
 
   const handleInputChange = (field, value) => {
     setFormData(prev => {
@@ -122,7 +122,7 @@ const ModalEditAgent = ({ isOpen, agent, onClose, onSave, onDelete, onCreate }) 
 
   const handleRegenerateEmail = () => {
     if (formData.nom && formData.prenom) {
-      const generatedEmail = generateSNCFEmail(formData.nom, formData.prenom);
+      const generatedEmail = generateEmail(formData.nom, formData.prenom);
       setFormData(prev => ({ ...prev, email: generatedEmail }));
       setEmailManuallyEdited(false);
     }
@@ -392,7 +392,7 @@ const ModalEditAgent = ({ isOpen, agent, onClose, onSave, onDelete, onCreate }) 
                     className={`flex-1 px-3 py-2 border rounded text-sm ${
                       isCreation && !formData.email ? 'border-red-300' : 'border-gray-300'
                     }`}
-                    placeholder="prenom.nom@reseau.sncf.fr"
+                    placeholder="nom@cothk.fr"
                   />
                   {emailManuallyEdited && formData.nom && formData.prenom && (
                     <button
