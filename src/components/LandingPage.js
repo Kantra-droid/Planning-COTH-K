@@ -272,7 +272,7 @@ const LandingPage = ({ onNavigate, user, onSignOut, canInstallPWA, isAppInstalle
         {/* Footer */}
         <footer className="landing-footer">
           <p>
-            © 2025 COT HK Planning •
+            © 2026 COT HK Planning •
             {' '}
             <a 
               href="https://github.com/seth1987/cogc-planning-dev" 
