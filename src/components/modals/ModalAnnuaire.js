@@ -47,7 +47,8 @@ const ModalAnnuaire = ({ isOpen, onClose, currentUser }) => {
 
   // Édition agent
   const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({ telephone: '', email: '' });
+  const [editForm, setEditForm] = useState({ prenom: '', telephone: '', email: '' });
+  const [isAdmin, setIsAdmin] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState(null);
 
@@ -65,7 +66,7 @@ const ModalAnnuaire = ({ isOpen, onClose, currentUser }) => {
 
       const { data, error: queryError } = await supabase
         .from('agents')
-        .select('id, nom, prenom, email, telephone, actif, groupe_id, groupes(nom, description, ordre)')
+        .select('id, nom, prenom, email, telephone, is_admin, actif, groupe_id, groupes(nom, description, ordre)')
         .eq('actif', true)
         .order('nom');
 
@@ -80,6 +81,12 @@ const ModalAnnuaire = ({ isOpen, onClose, currentUser }) => {
       }));
 
       setAgents(enriched);
+
+      // Détecter si l'utilisateur courant est admin
+      if (currentUser?.email) {
+        const me = enriched.find(a => a.email?.toLowerCase() === currentUser.email.toLowerCase());
+        setIsAdmin(me?.is_admin === true);
+      }
     } catch (err) {
       console.error('Erreur chargement annuaire:', err);
       setError('Impossible de charger l\'annuaire');
@@ -106,6 +113,7 @@ const ModalAnnuaire = ({ isOpen, onClose, currentUser }) => {
   const startEdit = (agent) => {
     setEditingId(agent.id);
     setEditForm({
+      prenom: agent.prenom || '',
       telephone: agent.telephone || '',
       email: agent.email || ''
     });
@@ -114,7 +122,7 @@ const ModalAnnuaire = ({ isOpen, onClose, currentUser }) => {
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditForm({ telephone: '', email: '' });
+    setEditForm({ prenom: '', telephone: '', email: '' });
     setSaveMessage(null);
   };
 
@@ -124,20 +132,26 @@ const ModalAnnuaire = ({ isOpen, onClose, currentUser }) => {
       setSaveMessage(null);
 
       const supabase = supabaseService.client;
+      const updateData = {
+        telephone: editForm.telephone || null,
+        email: editForm.email || null,
+        updated_at: new Date().toISOString()
+      };
+      // Seul l'admin peut modifier le prénom
+      if (isAdmin) {
+        updateData.prenom = editForm.prenom || null;
+      }
+
       const { error: updateError } = await supabase
         .from('agents')
-        .update({
-          telephone: editForm.telephone || null,
-          email: editForm.email || null,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', agentId);
 
       if (updateError) throw updateError;
 
       setAgents(prev => prev.map(a =>
         a.id === agentId
-          ? { ...a, telephone: editForm.telephone, email: editForm.email }
+          ? { ...a, telephone: editForm.telephone, email: editForm.email, ...(isAdmin ? { prenom: editForm.prenom } : {}) }
           : a
       ));
 
@@ -247,17 +261,30 @@ const ModalAnnuaire = ({ isOpen, onClose, currentUser }) => {
         backgroundColor: isCurrent ? 'rgba(0,240,255,0.06)' : 'transparent'
       }}>
         <td style={{ padding: '10px 12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ color: isCurrent ? '#00f0ff' : 'white', fontWeight: '600', fontSize: '13px' }}>
-              {agent.nom} {agent.prenom || ''}
-            </span>
-            {isCurrent && (
-              <span style={{
-                fontSize: '9px', backgroundColor: 'rgba(0,240,255,0.2)', color: '#00f0ff',
-                padding: '2px 6px', borderRadius: '8px'
-              }}>Vous</span>
-            )}
-          </div>
+          {isEditing && isAdmin ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ color: 'white', fontWeight: '600', fontSize: '13px' }}>{agent.nom}</span>
+              <input type="text" value={editForm.prenom}
+                onChange={(e) => setEditForm(prev => ({ ...prev, prenom: e.target.value }))}
+                placeholder="Prénom"
+                style={{ ...styles.input, width: '120px', border: '1px solid rgba(255,165,0,0.5)', backgroundColor: 'rgba(255,165,0,0.08)' }} />
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ color: isCurrent ? '#00f0ff' : 'white', fontWeight: '600', fontSize: '13px' }}>
+                {agent.nom} {agent.prenom || ''}
+              </span>
+              {!agent.prenom && isAdmin && (
+                <span style={{ fontSize: '9px', color: 'rgba(255,165,0,0.6)', fontStyle: 'italic' }}>pas de prénom</span>
+              )}
+              {isCurrent && (
+                <span style={{
+                  fontSize: '9px', backgroundColor: 'rgba(0,240,255,0.2)', color: '#00f0ff',
+                  padding: '2px 6px', borderRadius: '8px'
+                }}>Vous</span>
+              )}
+            </div>
+          )}
         </td>
         <td style={{ padding: '10px 12px' }}>
           {isEditing ? (
@@ -318,6 +345,15 @@ const ModalAnnuaire = ({ isOpen, onClose, currentUser }) => {
   // Formulaire d'édition mobile
   const renderEditForm = (agent) => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      {isAdmin && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Users size={14} style={{ color: '#FF9800' }} />
+          <input type="text" value={editForm.prenom}
+            onChange={(e) => setEditForm(prev => ({ ...prev, prenom: e.target.value }))}
+            placeholder="Prénom"
+            style={{ ...styles.input, flex: 1, border: '1px solid rgba(255,165,0,0.5)', backgroundColor: 'rgba(255,165,0,0.08)' }} />
+        </div>
+      )}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <Phone size={14} style={{ color: '#666' }} />
         <input type="tel" value={editForm.telephone}
