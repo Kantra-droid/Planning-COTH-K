@@ -157,7 +157,7 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
       // Analyser les données
       (data || []).forEach(entry => {
         const month = new Date(entry.date).getMonth();
-        const code = (entry.service_code || '').toUpperCase().trim();
+        const code = (entry.code_service || '').toUpperCase().trim();
         const statutConge = (entry.statut_conge || '').toUpperCase().trim();
         const poste = (entry.poste_code || '').toUpperCase().trim();
 
@@ -262,7 +262,7 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
       // Récupérer toutes les entrées de planning pour ces agents
       const { data: allPlanningData, error: planningError } = await supabase
         .from('planning')
-        .select('agent_id, service_code, poste_code')
+        .select('agent_id, code_service, poste_code')
         .in('agent_id', agentIds)
         .gte('date', startDate)
         .lte('date', endDate);
@@ -279,7 +279,7 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
       const totalReserveStats = initStats();
 
       (allPlanningData || []).forEach(entry => {
-        const code = (entry.service_code || '').toUpperCase().trim();
+        const code = (entry.code_service || '').toUpperCase().trim();
         const poste = (entry.poste_code || '').toUpperCase().trim();
         const isMyGroup = myGroupAgentIds.includes(entry.agent_id);
 
