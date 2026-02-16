@@ -4,7 +4,7 @@ import { X, Smartphone, Download, Share, MoreVertical, PlusSquare } from 'lucide
 /**
  * ModalInstallApp - Instructions d'installation PWA
  * 
- * Guide pour installer COGC Planning comme application sur mobile
+ * Guide pour installer COT HK Planning comme application sur mobile
  */
 const ModalInstallApp = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
@@ -26,7 +26,7 @@ const ModalInstallApp = ({ isOpen, onClose }) => {
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">Installer l'application</h2>
-              <p className="text-xs text-gray-400">COGC Planning sur votre mobile</p>
+              <p className="text-xs text-gray-400">COT HK Planning sur votre mobile</p>
             </div>
           </div>
           <button 
@@ -49,7 +49,7 @@ const ModalInstallApp = ({ isOpen, onClose }) => {
             <ol className="space-y-3 text-sm text-gray-300">
               <li className="flex items-start gap-2">
                 <span className="bg-green-500/20 text-green-400 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 text-xs font-bold">1</span>
-                <span>Ouvrez <strong>Chrome</strong> et accédez à COGC Planning</span>
+                <span>Ouvrez <strong>Chrome</strong> et accédez à COT HK Planning</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="bg-green-500/20 text-green-400 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 text-xs font-bold">2</span>
@@ -73,7 +73,7 @@ const ModalInstallApp = ({ isOpen, onClose }) => {
               </li>
             </ol>
             <p className="mt-3 text-xs text-green-400/70 italic">
-              L'icône COGC apparaîtra sur votre écran d'accueil !
+              L'icône COT HK apparaitra sur votre écran d'accueil !
             </p>
           </div>
 
@@ -86,7 +86,7 @@ const ModalInstallApp = ({ isOpen, onClose }) => {
             <ol className="space-y-3 text-sm text-gray-300">
               <li className="flex items-start gap-2">
                 <span className="bg-blue-500/20 text-blue-400 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 text-xs font-bold">1</span>
-                <span>Ouvrez <strong>Safari</strong> et accédez à COGC Planning</span>
+                <span>Ouvrez <strong>Safari</strong> et accédez à COT HK Planning</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="bg-blue-500/20 text-blue-400 rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0 text-xs font-bold">2</span>
@@ -114,14 +114,52 @@ const ModalInstallApp = ({ isOpen, onClose }) => {
             </p>
           </div>
 
+          {/* Partager */}
+          <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-2xl">📤</span>
+              <h3 className="text-lg font-semibold text-purple-400">Partager avec les collègues</h3>
+            </div>
+            <p className="text-sm text-gray-300 mb-3">
+              Envoyez ce lien par SMS, WhatsApp ou email. Ils n'ont qu'à l'ouvrir dans Chrome et suivre les étapes ci-dessus.
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                readOnly
+                value="https://planningcothk.netlify.app"
+                className="flex-1 px-3 py-2 bg-gray-800 border border-purple-500/40 rounded-lg text-white text-sm select-all"
+                onClick={(e) => e.target.select()}
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText('https://planningcothk.netlify.app');
+                  const btn = document.getElementById('copy-btn');
+                  if (btn) { btn.textContent = 'Copié !'; setTimeout(() => { btn.textContent = 'Copier'; }, 2000); }
+                }}
+                id="copy-btn"
+                className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/40 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+              >
+                Copier
+              </button>
+            </div>
+            {typeof navigator !== 'undefined' && navigator.share && (
+              <button
+                onClick={() => navigator.share({ title: 'COT HK Planning', text: 'Installe l\'app COT HK Planning sur ton téléphone :', url: 'https://planningcothk.netlify.app' })}
+                className="mt-3 w-full py-2 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border border-purple-500/40 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+              >
+                <Share className="w-4 h-4" /> Partager directement
+              </button>
+            )}
+          </div>
+
           {/* Avantages */}
           <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-cyan-400 mb-2">✨ Avantages de l'application</h3>
+            <h3 className="text-sm font-semibold text-cyan-400 mb-2">Avantages de l'application</h3>
             <ul className="text-sm text-gray-300 space-y-1">
-              <li>• Accès rapide depuis l'écran d'accueil</li>
-              <li>• Mode plein écran (sans barre de navigation)</li>
-              <li>• Fonctionne même avec connexion limitée</li>
-              <li>• Mises à jour automatiques</li>
+              <li>Accès rapide depuis l'écran d'accueil</li>
+              <li>Mode plein écran (sans barre de navigation)</li>
+              <li>Fonctionne même avec connexion limitée</li>
+              <li>Mises à jour automatiques</li>
             </ul>
           </div>
 

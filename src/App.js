@@ -43,9 +43,36 @@ const App = () => {
   const [currentYear, setCurrentYear] = React.useState(new Date().getFullYear());
   const [availableYears, setAvailableYears] = React.useState([]);
   const [yearsLoading, setYearsLoading] = React.useState(true);
-  
+
   // Onglet actif (GTI/GM ou GPIV/GIV/RLIV)
   const [activeTab, setActiveTab] = React.useState(ONGLETS_PLANNING[0].id);
+
+  // PWA Install
+  const [deferredPrompt, setDeferredPrompt] = React.useState(null);
+  const [isAppInstalled, setIsAppInstalled] = React.useState(false);
+
+  React.useEffect(() => {
+    // Détecter si déjà installée
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+      setIsAppInstalled(true);
+    }
+    // Capturer le prompt d'installation
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', () => setIsAppInstalled(true));
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallPWA = async () => {
+    if (!deferredPrompt) return false;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    setDeferredPrompt(null);
+    return outcome === 'accepted';
+  };
 
   const {
     agents,
@@ -242,10 +269,13 @@ const App = () => {
 
   if (currentView === 'landing') {
     return (
-      <LandingPage 
+      <LandingPage
         onNavigate={handleNavigate}
         user={user}
         onSignOut={signOut}
+        canInstallPWA={!!deferredPrompt}
+        isAppInstalled={isAppInstalled}
+        onInstallPWA={handleInstallPWA}
       />
     );
   }
