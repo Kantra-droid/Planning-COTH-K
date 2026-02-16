@@ -165,7 +165,7 @@ const LandingPage = ({ onNavigate, user, onSignOut, canInstallPWA, isAppInstalle
       {/* Loading Screen */}
       <div className={`loading-screen ${!isLoading ? 'hidden' : ''}`}>
         <div className="loader-ring" />
-        <div className="loading-text">Chargement COGC Planning...</div>
+        <div className="loading-text">Chargement COT HK Planning...</div>
       </div>
 
       {/* Ambient Background */}
@@ -185,13 +185,13 @@ const LandingPage = ({ onNavigate, user, onSignOut, canInstallPWA, isAppInstalle
           <div className="landing-logo">
             <LogoSVG />
           </div>
-          <h1 className="brand-name">COGC Planning</h1>
+          <h1 className="brand-name">COT HK Planning</h1>
           <p className="tagline">Paris Nord • Denfert-Rochereau</p>
           
           {/* SNCF Badge */}
           <div className="sncf-badge">
             <span className="sncf-badge-dot" />
-            <span className="sncf-badge-text">SNCF Réseau</span>
+            <span className="sncf-badge-text">SNCF TRANSILIEN</span>
           </div>
 
           {/* User info with logout button */}
@@ -272,7 +272,7 @@ const LandingPage = ({ onNavigate, user, onSignOut, canInstallPWA, isAppInstalle
         {/* Footer */}
         <footer className="landing-footer">
           <p>
-            © 2025 COGC Planning • 
+            © 2025 COT HK Planning •
             {' '}
             <a 
               href="https://github.com/seth1987/cogc-planning-dev" 

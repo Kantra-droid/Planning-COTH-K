@@ -267,7 +267,7 @@ const LoginPage = ({ onLogin }) => {
             {/* SNCF badge */}
             <div className="mt-4 inline-flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full">
               <div className="w-2 h-2 bg-red-500 rounded-full" />
-              <span className="text-xs text-white font-medium">SNCF Réseau</span>
+              <span className="text-xs text-white font-medium">SNCF TRANSILIEN</span>
             </div>
           </div>
           
