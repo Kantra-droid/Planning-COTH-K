@@ -106,7 +106,10 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
     setLoading(true);
     try {
       const startDate = `${selectedYear}-01-01`;
-      const endDate = `${selectedYear}-12-31`;
+      // Pour l'année en cours, ne compter que jusqu'à aujourd'hui (pas le planning futur)
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+      const endDate = selectedYear === today.getFullYear() ? todayStr : `${selectedYear}-12-31`;
 
       const { data, error } = await supabase
         .from('planning')
@@ -569,7 +572,14 @@ const ModalStatistiques = ({ isOpen, onClose, currentUser }) => {
           <div style={styles.content}>
             {/* Vacations (Matin, Soir, Nuit, RP, MA) */}
             <div style={styles.section}>
-              <h3 style={styles.sectionTitle}>📅 Vacations {selectedYear}</h3>
+              <h3 style={styles.sectionTitle}>
+                📅 Vacations {selectedYear}
+                {selectedYear === new Date().getFullYear() && (
+                  <span style={{fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginLeft: '8px'}}>
+                    (au {new Date().toLocaleDateString('fr-FR')})
+                  </span>
+                )}
+              </h3>
               <div style={styles.vacationsGrid}>
                 {/* Matinées */}
                 <div style={styles.statCard}>
