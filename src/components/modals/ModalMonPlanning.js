@@ -301,7 +301,7 @@ const ModalMonPlanning = ({ isOpen, onClose, currentUser, onUpdate, initialYear 
     setInitialNotePrivee(notePriveeValue);  // v3.2.2: Stocker l'état initial
     
     // Analyser le service stocké
-    const storedService = existing?.service_code || '';
+    const storedService = existing?.code_service || existing?.service_code || '';
     const storedTexteLibre = existing?.texte_libre || '';
     
     if (storedTexteLibre) {
@@ -389,20 +389,25 @@ const ModalMonPlanning = ({ isOpen, onClose, currentUser, onUpdate, initialYear 
     const hasTexteLibre = tempCategorie === 'LIBRE' && tempTexteLibre.trim() !== '';
 
     try {
-      const { error } = await supabase
-        .from('planning')
-        .upsert({
+      const upsertData = {
           agent_id: agentInfo.id,
           date: selectedDay.date,
-          service_code: finalService || null,
+          code_service: finalService || null,
           poste_code: tempPoste || null,
-          postes_supplementaires: tempPostesSupplementaires.length > 0 ? tempPostesSupplementaires : null,
           commentaire: tempNote || null,
-          statut_conge: tempStatutConge || null,
-          texte_libre: hasTexteLibre ? tempTexteLibre.trim() : null,
-          note_privee: tempNotePrivee || null,  // v3.2: Sauvegarder note privée (null si vide pour effacer)
           updated_at: new Date().toISOString()
-        }, { onConflict: 'agent_id,date' });
+        };
+      // Colonnes optionnelles (peuvent ne pas exister encore en DB)
+      try {
+        upsertData.postes_supplementaires = tempPostesSupplementaires.length > 0 ? tempPostesSupplementaires : null;
+        upsertData.statut_conge = tempStatutConge || null;
+        upsertData.texte_libre = hasTexteLibre ? tempTexteLibre.trim() : null;
+        upsertData.note_privee = tempNotePrivee || null;
+      } catch (e) { /* colonnes optionnelles */ }
+
+      const { error } = await supabase
+        .from('planning')
+        .upsert(upsertData, { onConflict: 'agent_id,date' });
 
       if (error) throw error;
 
@@ -428,13 +433,10 @@ const ModalMonPlanning = ({ isOpen, onClose, currentUser, onUpdate, initialYear 
           .upsert({
             agent_id: agentInfo.id,
             date: selectedDay.date,
-            service_code: null,
+            code_service: null,
             poste_code: null,
-            postes_supplementaires: null,
             commentaire: null,
-            statut_conge: null,
-            texte_libre: null,
-            note_privee: tempNotePrivee,  // Conserver la note privée
+            note_privee: tempNotePrivee,
             updated_at: new Date().toISOString()
           }, { onConflict: 'agent_id,date' });
 
@@ -601,22 +603,24 @@ const ModalMonPlanning = ({ isOpen, onClose, currentUser, onUpdate, initialYear 
 
   // === COULEURS CELLULES CALENDRIER ===
   const getCellBackgroundColor = (planning) => {
-    if (planning?.statut_conge && !planning?.service_code) {
+    const svc = planning?.code_service || planning?.service_code;
+    if (planning?.statut_conge && !svc) {
       return STATUT_CONGE_COLORS[planning.statut_conge]?.bg || 'rgba(255, 255, 255, 0.08)';
     }
-    if (!planning?.service_code) return 'rgba(255, 255, 255, 0.08)';
-    const code = planning.service_code.toUpperCase();
+    if (!svc) return 'rgba(255, 255, 255, 0.08)';
+    const code = svc.toUpperCase();
     const colorConfig = getServiceColor(code);
     if (!colorConfig || colorConfig.bg === 'transparent') return 'rgba(255, 255, 255, 0.08)';
     return colorConfig.bg;
   };
 
   const getCellTextColor = (planning) => {
-    if (planning?.statut_conge && !planning?.service_code) {
+    const svc = planning?.code_service || planning?.service_code;
+    if (planning?.statut_conge && !svc) {
       return STATUT_CONGE_COLORS[planning.statut_conge]?.text || 'white';
     }
-    if (!planning?.service_code) return 'white';
-    const code = planning.service_code.toUpperCase();
+    if (!svc) return 'white';
+    const code = svc.toUpperCase();
     const colorConfig = getServiceColor(code);
     if (!colorConfig || colorConfig.bg === 'transparent') return 'white';
     return colorConfig.text;
@@ -625,7 +629,7 @@ const ModalMonPlanning = ({ isOpen, onClose, currentUser, onUpdate, initialYear 
   const renderCellContent = (planning) => {
     if (!planning) return null;
     
-    const serviceCode = planning.service_code;
+    const serviceCode = planning.code_service || planning.service_code;
     const posteCode = planning.poste_code;
     const statutConge = planning.statut_conge;
     const postesSupp = planning.postes_supplementaires;
