@@ -120,44 +120,13 @@ const LandingPage = ({ onNavigate, user, onSignOut, canInstallPWA, isAppInstalle
     }
   ];
 
-  // Logo SVG Component
-  const LogoSVG = () => (
-    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style={{ stopColor: '#00f0ff' }} />
-          <stop offset="50%" style={{ stopColor: '#0066b3' }} />
-          <stop offset="100%" style={{ stopColor: '#c91932' }} />
-        </linearGradient>
-      </defs>
-      {/* Hexagonal frame */}
-      <polygon 
-        points="50,5 95,30 95,70 50,95 5,70 5,30" 
-        fill="none" 
-        stroke="url(#logoGradient)" 
-        strokeWidth="2"
-      />
-      <polygon 
-        points="50,20 80,37 80,63 50,80 20,63 20,37" 
-        fill="none" 
-        stroke="url(#logoGradient)" 
-        strokeWidth="1.5" 
-        opacity="0.6"
-      />
-      {/* Train/Rail symbol */}
-      <path 
-        d="M35 40 L65 40 L65 65 L35 65 Z" 
-        fill="none" 
-        stroke="url(#logoGradient)" 
-        strokeWidth="2"
-        rx="4"
-      />
-      <path d="M40 40 L40 35" stroke="url(#logoGradient)" strokeWidth="2" />
-      <path d="M60 40 L60 35" stroke="url(#logoGradient)" strokeWidth="2" />
-      <path d="M35 52 L65 52" stroke="url(#logoGradient)" strokeWidth="1.5" opacity="0.6" />
-      <circle cx="42" cy="62" r="4" fill="url(#logoGradient)" />
-      <circle cx="58" cy="62" r="4" fill="url(#logoGradient)" />
-    </svg>
+  // Logo Component - Image COT HK
+  const LogoImage = () => (
+    <img
+      src="/logo-cohk.png"
+      alt="Centre Opérationnel Transilien H/K"
+      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+    />
   );
 
   return (
@@ -183,7 +152,7 @@ const LandingPage = ({ onNavigate, user, onSignOut, canInstallPWA, isAppInstalle
         {/* Header */}
         <header className="landing-header">
           <div className="landing-logo">
-            <LogoSVG />
+            <LogoImage />
           </div>
           <h1 className="brand-name">COT HK Planning</h1>
           <p className="tagline">Paris Nord COT HK</p>

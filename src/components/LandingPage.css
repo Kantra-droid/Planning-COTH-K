@@ -201,8 +201,8 @@
 
 /* Logo */
 .landing-logo {
-  width: 100px;
-  height: 100px;
+  width: 140px;
+  height: 140px;
   margin: 0 auto 25px;
   position: relative;
 }
@@ -211,6 +211,14 @@
   width: 100%;
   height: 100%;
   filter: drop-shadow(0 0 20px var(--nx-glow-cyan));
+}
+
+.landing-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 15px rgba(0, 102, 179, 0.5));
+  border-radius: 50%;
 }
 
 .brand-name {
