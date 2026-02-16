@@ -186,7 +186,7 @@ const LandingPage = ({ onNavigate, user, onSignOut, canInstallPWA, isAppInstalle
             <LogoSVG />
           </div>
           <h1 className="brand-name">COT HK Planning</h1>
-          <p className="tagline">Paris Nord • Denfert-Rochereau</p>
+          <p className="tagline">Paris Nord COT HK</p>
           
           {/* SNCF Badge */}
           <div className="sncf-badge">
